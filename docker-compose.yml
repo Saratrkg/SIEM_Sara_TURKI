@@ -1,6 +1,40 @@
 version: "2.2"
 
 services:
+
+ apache: 
+    image: httpd:latest 
+    container_name: container_apache
+    
+    ports:
+      - '80:80' # Les ports que j'expose
+    
+    volumes:
+      - ./website:/usr/local/apache2/htdocs 
+      - ./config:/usr/local/apache2/config # Le chemin vers le fichier de configuration de mon service Apache
+    
+    logging: 
+      driver: "json-file" # Utilisation du format JSON pour les journaux
+      options:
+        max-size: "100m" # La taille maximale d'un fichier journal
+        max-file: "10" # Le nombre maximal de fichiers journaux à conserver
+    
+    depends_on: # Dépendances avec les autres services
+      es01: 
+        condition: service_healthy # Condition pour s'assurer que le service est en bonne santé avant de démarrer mon service Apache
+    
+    # Commande exécutée lors du lancement du conteneur : 
+    # Déplacement dans le répertoire contenant le fichier de configuration de Filebeat, 
+    # Je m'assure que le fichier de configuration de Filebeat appartient à l'utilisateur root, 
+    # Je lance Filebeat avec les options -e (pour activer l'output console) et -c (pour spécifier le fichier de configuration)
+    command: >
+      bash -c '
+        cd /usr/local/apache2/config/filebeat;
+        chown root filebeat.yml;
+        ./filebeat -e -c filebeat.yml 
+       '
+     
+
   setup:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     volumes:
@@ -108,11 +142,8 @@ services:
          -E output.elasticsearch.hosts=["es01:9200"]
          -E output.elasticsearch.protocol=https
          -E output.elasticsearch.username=elastic
-         -E output.elasticsearch.password=${ELASTIC_PASSWORD}
-         -E output.elasticsearch.ssl.enabled=true
-         -E output.elasticsearch.ssl.certificate_authorities=/usr/share/apm-server/certs/ca/ca.crt
-         -E output.elasticsearch.ssl.certificate=/usr/share/apm-server/certs/es01/es01.crt
-         -E output.elasticsearch.ssl.key=/usr/share/apm-server/certs/es01/es01.key            
+         -E output.elasticsearch.password=pass@123
+                  
 
   kibana:
     depends_on:
@@ -140,6 +171,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+   
+       
 
   logstash:
     depends_on:
@@ -152,6 +185,8 @@ services:
       - 4000:4000 # my custom port
     mem_limit: ${MEM_LIMIT}
      
+     
+ 
 volumes:
   certs:
     driver: local

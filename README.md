@@ -76,3 +76,6 @@ curl --cacert /tmp/ca.crt -u elastic:pass@123 https://localhost:9200
 # NOTE 
 
 > You can simply comment other stacks which is not needed. For example if you want to just run Elasticsearch & Kibana, Just comment the APM or other stack specification.
+# SIEM_Sara_TURKI_GHOUILA
+# SIEM_Sara_TURKI_GHOUILA
+# SIEM_Sara_TURKI_GHOUILA
